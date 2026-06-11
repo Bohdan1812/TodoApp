@@ -26,6 +26,7 @@ options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 var app = builder.Build();
 
@@ -43,6 +44,7 @@ app.UseHttpsRedirection();
 
 app.MapTaskEndpoints();
 app.MapUserEndpoints();
+app.MapCategoryEndpoints();
 
 app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> sources) =>
 {
