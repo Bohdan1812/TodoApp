@@ -20,7 +20,7 @@ public static class TaskEndpoints
         {
             var task = await taskService.GetByIdAsync(id, userId);
             return Results.Ok(task);
-        });
+        }).WithName("GetTaskById");
 
         group.MapPost("/", async ([FromBody] CreateTodoTaskDto dto, Guid userId, ITaskService taskService) =>
         {
@@ -29,9 +29,9 @@ public static class TaskEndpoints
 
             var createdTask = await taskService.CreateAsync(dto, userId);
 
-            return Results.CreatedAtRoute("GetTaskById", new {id = createdTask, userId}, createdTask);
+            return Results.CreatedAtRoute("GetTaskById", new {id = createdTask.Id, userId}, createdTask);
 
-        }).WithName("GetTaskById");
+        });
         
         group.MapPut("/{id:guid}", async (Guid id, [FromBody] CreateTodoTaskDto dto, Guid userId, ITaskService taskService) =>
         {
