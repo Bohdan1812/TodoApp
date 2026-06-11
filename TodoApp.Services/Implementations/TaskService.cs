@@ -60,31 +60,55 @@ public class TaskService:ITaskService
 
         await _context.SaveChangesAsync();
         return new TodoTaskDto
-        {
-            Id = newTask.Id,
-            Title = newTask.Title,
-            Description = newTask.Description,
-            IsCompleted = newTask.IsCompleted,
-            DueDate = newTask.DueDate,
-            CreatedAt = newTask.CreatedAt,
-            CategoryId = newTask.CategoryId
-        };
+        (
+            newTask.Id,
+            newTask.Title,
+            newTask.Description,
+            newTask.IsCompleted,
+            newTask.DueDate,
+            newTask.CreatedAt,
+            newTask.CategoryId
+        );
     }
 
     public async Task<bool> UpdateAsync(Guid id, CreateTodoTaskDto dto, Guid userId)
     {
-        var task = await _context
+        var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+
+        if (task is null)
+            return false;
+        
+        task.Title = dto.Title;
+        task.Description = dto.Description;
+        task.DueDate = dto.DueDate;
+        task.CategoryId = dto.CategoryId;
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 
-    public Task<bool> DeleteAsync(Guid id, Guid userId)
+    public async Task<bool> DeleteAsync(Guid id, Guid userId)
     {
-        throw new NotImplementedException();
+        var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+
+        if (task is null)
+            return false;
+
+        _context.Tasks.Remove(task);
+        
+        await _context.SaveChangesAsync();
+        return true;
     }
 
-    public Task<bool> ToggleCompleteAsync(Guid id, Guid userId)
+    public async Task<bool> ToggleCompleteAsync(Guid id, Guid userId)
     {
-        throw new NotImplementedException();
-    }
+        var task = await _context.Tasks
+            .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
-    private readonly A
+        if (task == null) return false;
+
+        task.IsCompleted = !task.IsCompleted;
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

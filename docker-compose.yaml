@@ -13,21 +13,23 @@ services:
     networks:
       - todo-network
 
-  todo-api:
-    image: todo-webapi
-    container_name: todo-dotnet-api
-    build:
-      context: .
-      dockerfile: TodoApp.WebApi/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=todo-db;Port=5432;Database=TodoDb;Username=postgres;Password=your_secure_password
-    depends_on:
-      - todo-db
-    networks:
-      - todo-network
+  # todo-api:
+  #   image: todo-webapi
+  #   container_name: todo-dotnet-api
+  #   build:
+  #     context: .
+  #     dockerfile: TodoApp.WebApi/Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
+  #     - COMPlus_ReadyToRun=0
+  #     - ConnectionStrings__DefaultConnection=Host=todo-db;Port=5432;Database=TodoDb;Username=postgres;Password=your_secure_password
+  #   depends_on:
+  #     - todo-db
+  #   networks:
+  #     - todo-network
 
 volumes:
   todo-db-data:

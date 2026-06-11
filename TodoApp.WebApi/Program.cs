@@ -44,5 +44,10 @@ app.UseHttpsRedirection();
 app.MapTaskEndpoints();
 app.MapUserEndpoints();
 
+app.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> sources) =>
+{
+    return sources.SelectMany(s => s.Endpoints).Select(e => e.DisplayName);
+});
+
 app.Run();
 

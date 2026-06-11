@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using TodoApp.DataAccess.Entities;
 using TodoApp.Services.Interfaces;
 
 public static class UserEndpoints
@@ -9,11 +8,17 @@ public static class UserEndpoints
         var group = app.MapGroup("users").WithTags("Users");
 
 
-        group.MapGet("/{id:guid}", async (Guid userId, IUserService userService) =>
+        group.MapGet("/{id:guid}", async (Guid id, IUserService userService) =>
         {
-            var user = await userService.GetByIdAsync(userId);
+            var user = await userService.GetByIdAsync(id);
             return Results.Ok(user);
         }).WithName("GetUserById");
+
+        group.MapGet("/", async (IUserService userService) =>
+        {
+            var users = await userService.GetAllAsync();
+            return Results.Ok(users);
+        });
 
         group.MapPost("/", async (string userName, IUserService userService) =>
         {
@@ -26,15 +31,15 @@ public static class UserEndpoints
 
         });
 
-        group.MapPut("/{id:guid}", async (Guid userId, [FromBody] string username, IUserService userService) =>
+        group.MapPut("/{id:guid}", async (Guid id, [FromBody] string username, IUserService userService) =>
         {
-            var result = await userService.UpdateAsync(userId, username);
+            var result = await userService.UpdateAsync(id, username);
             return result ? Results.NoContent() : Results.NotFound(new {message = "Користувача не знайдено або доступ заборонено"});
         });
 
-        group.MapDelete("/{id:guid}", async (Guid userId, IUserService userService) =>
+        group.MapDelete("/{id:guid}", async (Guid id, IUserService userService) =>
         {
-            var result = await userService.DeleteAsync(userId);
+            var result = await userService.DeleteAsync(id);
             return result ? Results.NoContent() : Results.NotFound(new {message = "Користувача не знайдено або доступ заборонено"});
         });
 
