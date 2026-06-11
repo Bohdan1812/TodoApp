@@ -1,16 +1,18 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.DataAccess.Entities;
 
 namespace TodoApp.DataAccess;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
         
     }
 
-    public DbSet<User> Users => Set<User>();
+    //public DbSet<User> Users => Set<User>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<TodoTask> Tasks => Set<TodoTask>();
 
@@ -20,12 +22,12 @@ public class AppDbContext : DbContext
 
         const string GENERATE_GUID_SQL = "gen_random_uuid()"; 
 
-        modelBuilder.Entity<User>(entity =>
-        {
-           entity.HasKey(u => u.Id); 
-           entity.Property(u => u.Id).HasDefaultValueSql(GENERATE_GUID_SQL);
-           entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
-        });
+        // modelBuilder.Entity<User>(entity =>
+        // {
+        //    entity.HasKey(u => u.Id); 
+        //    entity.Property(u => u.Id).HasDefaultValueSql(GENERATE_GUID_SQL);
+        //    entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
+        // });
 
         modelBuilder.Entity<Category>(entity =>
         {

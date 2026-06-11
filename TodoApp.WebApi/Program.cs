@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.DataAccess;
 using TodoApp.DataAccess.Entities;
@@ -7,10 +8,24 @@ using TodoApp.WebApi.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddAuthentication(IdentityConstants.BearerScheme)
+.AddBearerToken(IdentityConstants.BearerScheme);
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireUppercase = false;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddApiEndpoints();
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -41,6 +56,11 @@ if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("ASPNE
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapIdentityApi<User>();
 
 app.MapTaskEndpoints();
 app.MapUserEndpoints();
