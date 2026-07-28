@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using TodoApp.DataAccess;
 using TodoApp.DataAccess.Entities;
 using TodoApp.Services.Implementations;
@@ -32,6 +33,25 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new() {Title = "TodoApp", Version = "v1"});
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type =  SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Введіть JWT токен у форматі: Bearer {ваш_токен}"
+    });
+
+     options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        {
+            // Передаємо "Bearer" та сам об'єкт document у конструктор посилання
+            new OpenApiSecuritySchemeReference("Bearer", document), 
+            new List<string>() 
+        }
+    });
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

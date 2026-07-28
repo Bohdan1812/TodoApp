@@ -1,65 +1,67 @@
-using Microsoft.EntityFrameworkCore;
-using TodoApp.DataAccess;
+using Microsoft.AspNetCore.Identity;
 using TodoApp.DataAccess.Entities;
+using TodoApp.Services.DTOs;
 using TodoApp.Services.Interfaces;
 
 namespace TodoApp.Services.Implementations;
 
 public class UserService : IUserService
 {
-    private readonly AppDbContext _dbContext;
-
-    public UserService(AppDbContext appDbContext)
+    private readonly UserManager<User> _userManager;
+    public UserService(UserManager<User> userManager)
     {
-        _dbContext = appDbContext;
+        _userManager = userManager;
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<UserDto?> GetInfo(Guid id)
     {
-        return await _dbContext.Users.ToListAsync();
+        var user = await _userManager.FindByIdAsync(id.ToString());
+
+        if(user is null)
+            return null;
+
+        return new UserDto(id, user.Email, user.DisplayName);
     }
-    public async Task<User> CreateAsync(string userName)
+
+    public async Task<bool> RemoveAsync(Guid id, string password)
     {
-        var user = new User
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null)
+            return false;
+        
+        var passCheck = await _userManager.CheckPasswordAsync(user, password);
+        
+        if (!passCheck)
+            return false;
+
+        var result = await  _userManager.DeleteAsync(user);
+        return result.Succeeded;
+    }
+
+    public async Task<bool> UpdateAsync(Guid id, UpdateUserDto updateUserDto)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null)
+            return false;
+        
+        user.DisplayName = updateUserDto.DisplayName;
+        
+        if (!string.Equals(user.Email, updateUserDto.Email, StringComparison.OrdinalIgnoreCase))
         {
-            Username = userName
-        };
+            // Оновлюємо Email та його нормалізовану версію
+            user.Email = updateUserDto.Email;
+            user.NormalizedEmail = _userManager.NormalizeEmail(updateUserDto.Email);
 
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync();
+            // Оскільки стандартний /login прив'язаний до UserName, 
+            // синхронізуємо UserName із новим Email
+            user.UserName = updateUserDto.Email;
+            user.NormalizedUserName = _userManager.NormalizeName(updateUserDto.Email);
 
-        return user;
-    }
+            // Якщо у майбутньому увімкнеш верифікацію — скидаємо підтвердження
+            user.EmailConfirmed = false; 
+        }
 
-    public async Task<bool> DeleteAsync(Guid userId)
-    {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (user is null)
-            return false;
-        
-        _dbContext.Users.Remove(user);
-        await _dbContext.SaveChangesAsync();
-
-        return true;
-    }
-
-    public async Task<User?> GetByIdAsync(Guid userId)
-    {
-        return await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-    }
-
-    public async Task<bool> UpdateAsync(Guid userId, string userName)
-    {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        
-        if (user is null)
-            return false;
-        
-        user.Username = userName;
-        
-        _dbContext.Users.Update(user);
-        await _dbContext.SaveChangesAsync();
-        
-        return true;
+        var result = await _userManager.UpdateAsync(user);
+        return result.Succeeded;
     }
 }

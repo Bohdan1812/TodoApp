@@ -1,47 +1,47 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using TodoApp.Services.DTOs;
 using TodoApp.Services.Interfaces;
 
 public static class UserEndpoints
 {
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("users").WithTags("Users");
+        var group = app.MapGroup("user").WithTags("User Profile")
+        .RequireAuthorization();
 
-
-        group.MapGet("/{id:guid}", async (Guid id, IUserService userService) =>
+        group.MapGet("/", async (ClaimsPrincipal user, IUserService userService) =>
         {
-            var user = await userService.GetByIdAsync(id);
-            return Results.Ok(user);
-        }).WithName("GetUserById");
+            var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if(!Guid.TryParse(userIdString, out Guid userId))
+                return Results.Unauthorized();
+            
+            var userInfo = await userService.GetInfo(userId);
 
-        group.MapGet("/", async (IUserService userService) =>
-        {
-            var users = await userService.GetAllAsync();
-            return Results.Ok(users);
+            return Results.Ok(userInfo);
         });
 
-        group.MapPost("/", async (string userName, IUserService userService) =>
+        group.MapPut("/", async (ClaimsPrincipal user, [FromBody] UpdateUserDto updateDto, IUserService userService) =>
         {
-            if (string.IsNullOrEmpty(userName))
-                return Results.BadRequest(new {message = "Ім'я користувача не може бути попрожнім"});
+            var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if(!Guid.TryParse(userIdString, out Guid userId))
+                return Results.Unauthorized();
 
-            var newUser = await userService.CreateAsync(userName);
+            var result = await userService.UpdateAsync(userId, updateDto);
 
-            return Results.CreatedAtRoute("GetUserById", new {newUser.Id}, newUser);
-
+            return result ? Results.NoContent() : Results.BadRequest();//Потрібно прописати повідомлення помилки
+             
         });
 
-        group.MapPut("/{id:guid}", async (Guid id, [FromBody] string username, IUserService userService) =>
+        group.MapDelete("/", async (ClaimsPrincipal user, [FromBody]string password, IUserService userService)=>
         {
-            var result = await userService.UpdateAsync(id, username);
-            return result ? Results.NoContent() : Results.NotFound(new {message = "Користувача не знайдено або доступ заборонено"});
+            var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if(!Guid.TryParse(userIdString, out Guid userId))
+                return Results.Unauthorized();
+            
+            var result = await userService.RemoveAsync(userId, password);
+            return result ? Results.NoContent() : Results.BadRequest();//Потрібно прописати повідомлення помилки  
         });
-
-        group.MapDelete("/{id:guid}", async (Guid id, IUserService userService) =>
-        {
-            var result = await userService.DeleteAsync(id);
-            return result ? Results.NoContent() : Results.NotFound(new {message = "Користувача не знайдено або доступ заборонено"});
-        });
-
     }
 }

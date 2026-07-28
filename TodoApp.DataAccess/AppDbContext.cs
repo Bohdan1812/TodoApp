@@ -12,7 +12,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
         
     }
 
-    //public DbSet<User> Users => Set<User>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<TodoTask> Tasks => Set<TodoTask>();
 
@@ -22,12 +21,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 
         const string GENERATE_GUID_SQL = "gen_random_uuid()"; 
 
-        // modelBuilder.Entity<User>(entity =>
-        // {
-        //    entity.HasKey(u => u.Id); 
-        //    entity.Property(u => u.Id).HasDefaultValueSql(GENERATE_GUID_SQL);
-        //    entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
-        // });
 
         modelBuilder.Entity<Category>(entity =>
         {
