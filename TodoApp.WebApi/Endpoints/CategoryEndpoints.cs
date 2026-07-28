@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using TodoApp.Services.Interfaces;
 
@@ -11,8 +12,13 @@ public static class CategoryEndpoints
         .WithTags("Categories")
         .RequireAuthorization();
 
-        group.MapGet("/{id:guid}", async (Guid id, Guid userId, ICategoryService categoryService) =>
+        group.MapGet("/{id:guid}", async (Guid id,  ClaimsPrincipal user, ICategoryService categoryService) =>
         {
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if(!Guid.TryParse(userIdClaim, out var userId))
+                return Results.Unauthorized();
+
             var task = await categoryService.GetByIdAsync(id, userId);
 
             if(task is null)
@@ -21,15 +27,25 @@ public static class CategoryEndpoints
             return Results.Ok(task);
         });
 
-        group.MapGet("/", async (Guid userId, ICategoryService categoryService) =>
+        group.MapGet("/", async (ClaimsPrincipal user, ICategoryService categoryService) =>
         {
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if(!Guid.TryParse(userIdClaim, out var userId))
+                return Results.Unauthorized();
+
             var tasks = await categoryService.GetAllAsync(userId);
             return Results.Ok(tasks);
         })
         .WithName("GetCategoryById");
 
-        group.MapPost("/", async ([FromBody]string name, Guid userId, ICategoryService categoryService) =>
+        group.MapPost("/", async ([FromBody]string name, ClaimsPrincipal user, ICategoryService categoryService) =>
         {
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if(!Guid.TryParse(userIdClaim, out var userId))
+                return Results.Unauthorized();
+
             if (string.IsNullOrEmpty(name))
                 return Results.BadRequest("Назва категорія не може бути пустою");
             
@@ -38,8 +54,13 @@ public static class CategoryEndpoints
             return Results.CreatedAtRoute("GetCategoryById", new {id = category.Id, userId}, category);
         });
 
-        group.MapPut("/", async (Guid id, [FromBody]string name, Guid userId, ICategoryService categoryService) =>
+        group.MapPut("/", async (Guid id, [FromBody]string name, ClaimsPrincipal user, ICategoryService categoryService) =>
         {
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if(!Guid.TryParse(userIdClaim, out var userId))
+                return Results.Unauthorized();
+
             if (string.IsNullOrEmpty(name))
                 return Results.BadRequest("Назва категорія не може бути пустою");
             
@@ -48,8 +69,13 @@ public static class CategoryEndpoints
             return result ? Results.NoContent() : Results.NotFound("Категорію не знайдено або користувач немає доступу");
         });
 
-        group.MapDelete("/", async (Guid id, Guid userId, ICategoryService categoryService) =>
+        group.MapDelete("/", async (Guid id, ClaimsPrincipal user, ICategoryService categoryService) =>
         {
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if(!Guid.TryParse(userIdClaim, out var userId))
+                return Results.Unauthorized();
+
             var result = await categoryService.DeleteAsync(id, userId);
 
             return result ? Results.NoContent() : Results.NotFound("Категорію не знайдено або користувач немає доступу");
